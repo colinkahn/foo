@@ -4,6 +4,7 @@
   (:require
     [compojure.route :as route]
     [compojure.handler :as handler]
+    [org.httpkit.server :as httpkit]
     [ring.util.response :as response]
     [chord.http-kit :refer [wrap-websocket-handler]]
     [clojure.core.async :refer [<! >! put! close! go-loop]]))
@@ -28,3 +29,22 @@
 
 (def app
   (handler/site main-routes))
+
+(defonce !server
+  (atom nil))
+
+(defn start-server! []
+  (swap! !server
+    (fn [running-server]
+      (or running-server
+          (httpkit/run-server app {:port 8080})))))
+
+(defn stop-server []
+  (swap! !server
+    (fn [running-server]
+      (when running-server
+        ;; call the server to stop it
+        (running-server)
+        nil))))
+
+(start-server!)
